@@ -25,6 +25,7 @@ export type System = t.TypeOf<typeof System>;
 export interface LoadedSystem {
   [key: string]: LoadedDependency;
 }
+export type Dependencies = LoadedSystem;
 
 export const Systems = t.record(t.string, t.union([t.null, System]));
 export type Systems = t.TypeOf<typeof Systems>;

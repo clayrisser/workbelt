@@ -1,5 +1,21 @@
 {
   "language": "en",
   "version": "0.1",
-  "words": ["sudo", "autoinstall", "str", "workbelt"]
+  "words": [
+    "autoinstall",
+    "centos",
+    "darwin",
+    "debian",
+    "fedora",
+    "linux",
+    "osx",
+    "redhat",
+    "rhel",
+    "str",
+    "sudo",
+    "ubuntu",
+    "unix",
+    "workbelt",
+    "yaml"
+  ]
 }

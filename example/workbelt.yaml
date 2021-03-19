@@ -13,5 +13,5 @@ systems:
 
   linux:
 
-  ubuntu:
+  debian:
     grep: apt install
