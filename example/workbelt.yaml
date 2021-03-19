@@ -1,0 +1,17 @@
+includes:
+  - '**/workbelt.yaml'
+
+autoinstall: false
+
+systems:
+  darwin:
+    ggrep:
+      install: 'brew install grep'
+      sudo: true
+    gsed: 'brew install gsed'
+    '/home/user/{{ env.USER }}/hi': hi
+
+  linux:
+
+  ubuntu:
+    grep: apt install
