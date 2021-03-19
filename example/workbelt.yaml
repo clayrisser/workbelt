@@ -5,13 +5,13 @@ autoinstall: false
 
 systems:
   darwin:
-    ggrep:
-      install: 'brew install grep'
-      sudo: true
-    gsed: 'brew install gsed'
-    '/home/user/{{ env.USER }}/hi': hi
+    ggrep: |
+      brew install grep
+    gsed: |
+      brew install gsed
 
   linux:
-
-  debian:
-    grep: apt install
+    docker: https://get.docker.com
+    # docker: |
+    #   curl -L https://get.docker.com | sh
+    # sudo: true

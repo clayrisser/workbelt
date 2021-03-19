@@ -1,4 +1,5 @@
 import path from 'path';
+import Install from '~/install';
 import system from '~/system';
 import {
   ConfigLoader,
@@ -41,7 +42,14 @@ export default class Workbelt {
   }
 
   async install() {
-    console.log(this.dependencies);
+    await Promise.all(
+      Object.entries(this.dependencies).map(
+        async ([dependencyName, dependency]: [string, LoadedDependency]) => {
+          const install = new Install(this.config, dependency, dependencyName);
+          await install.run();
+        }
+      )
+    );
   }
 }
 

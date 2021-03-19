@@ -8,7 +8,9 @@ import { PathReporter } from 'io-ts/PathReporter';
 import { HashMap } from '~/types';
 
 export const Dependency = t.type({
+  description: t.union([t.undefined, t.string]),
   install: t.string,
+  instructions: t.union([t.undefined, t.string]),
   sudo: t.union([t.undefined, t.boolean])
 });
 export type Dependency = t.TypeOf<typeof Dependency>;
@@ -143,9 +145,11 @@ export class ConfigLoader {
   ): LoadedDependency {
     if (typeof dependency === 'string') {
       return {
+        _cwd: cwd,
+        description: undefined,
         install: dependency,
-        sudo: false,
-        _cwd: cwd
+        instructions: undefined,
+        sudo: false
       };
     }
     return {
