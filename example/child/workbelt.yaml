@@ -1,3 +1,0 @@
-systems:
-  centos:
-    grep: yum install

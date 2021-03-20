@@ -1,43 +1,26 @@
 includes:
   - '**/workbelt.yaml'
 
-name: Q2
+name: siliconhills
 
 autoinstall: false
 
 systems:
-  linux:
-    popcorn:
-      install: |
-        echo howdy 1>&2
-        false
-      resources:
-        - https://example.com
-        - https://pnpm.js.org
-      sudo: true
-      instructions: |
-        do nothing
-
-    choco:
-      install: |
-        echo yay ayay yay
-      resources:
-        - https://example.com
-      instructions: |
-        hahaha ha
-
-    pickle:
-      resources:
-        - https://google.com
-      instructions: |
-        just a link
-
-  allz:
+  all:
     pnpm:
       install: |
         npm install -g pnpm
       resources:
         - https://pnpm.js.org
+
+  unix:
+    nvm:
+      install: |
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
+      resources:
+        - https://github.com/nvm-sh/nvm
+      instructions:
+        you will need to reload your terminal after installation completes
 
   darwin:
     ggrep:
@@ -45,13 +28,37 @@ systems:
         brew install grep
       resources:
         - https://formulae.brew.sh/formula/grep
+        - https://www.gnu.org/software/grep
     gsed:
       install: |
         brew install gsed
       resources:
         - https://formulae.brew.sh/formula/gnu-sed
+        - https://www.gnu.org/software/sed
+    make:
+      install: |
+        brew install make
+      resources:
+        - https://formulae.brew.sh/formula/make
+        - https://www.gnu.org/software/make
 
-  linuxz:
+  debian:
+    make:
+      install: |
+        apt install -y make
+      resources:
+        - https://www.gnu.org/software/make
+      sudo: true
+
+  rhel:
+    make:
+      install: |
+        yum install -y make
+      resources:
+        - https://www.gnu.org/software/make
+      sudo: true
+
+  linux:
     docker:
       install: |
         curl -L https://get.docker.com | sh
