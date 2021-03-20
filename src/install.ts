@@ -47,7 +47,8 @@ ${open.trim()}
   async runScript() {
     const { install, sudo } = this.dependency;
     if (!install) return;
-    if (this.config.autoinstall) {
+    const autoinstall = this.config.autoinstall && !sudo;
+    if (autoinstall) {
       this.spinner.info(`auto installing ${this.dependencyName}`);
       let exitCode = 0;
       const errChunks: string[] = [];
@@ -103,23 +104,35 @@ _**you do not need to do anything for ${this.dependencyName}**_
         );
         this.status = InstallStatus.Installed;
       }
-      this.report.addInfo(
+    } else {
+      const warning = `${this.dependencyName} was not auto installed${
+        this.config.autoinstall ? ' because it requires sudo privileges' : ''
+      }`;
+      if (this.config.autoinstall) this.spinner.warn(warning);
+      this.report.infos[0] = `### ➜ ${this.dependencyName}`;
+      this.report.infos.splice(
+        1,
+        0,
         `
-\`\`\`sh
-${sudo ? 'sudo su\n' : ''}${install.trim()}
-\`\`\`
+_${warning}_ \\
+_**please install ${this.dependencyName} manually**_
+
+#### Instructions
 `
       );
-    } else {
       this.report.addInfo(
         `please run the following script to install ${this.dependencyName}
-
+`
+      );
+      this.status = InstallStatus.NotInstalled;
+    }
+    this.report.addInfo(
+      `
 \`\`\`sh
 ${sudo ? 'sudo su\n' : ''}${install.trim()}
 \`\`\`
 `
-      );
-    }
+    );
   }
 
   async renderInstructions() {

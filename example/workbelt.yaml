@@ -3,7 +3,7 @@ includes:
 
 name: Q2
 
-autoinstall: true
+autoinstall: false
 
 systems:
   linux:
@@ -12,6 +12,7 @@ systems:
         echo howdy 1>&2
         false
       open: https://example.com
+      sudo: true
       instructions: |
         do nothing
 

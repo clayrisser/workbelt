@@ -45,6 +45,9 @@ export default class Workbelt {
     const configLoader = new ConfigLoader();
     this.config =
       this.options.config || configLoader.load(this.options.configPath);
+    if (typeof this.options.autoinstall !== 'undefined') {
+      this.config.autoinstall = this.options.autoinstall;
+    }
     this.dependencies = Object.values(['all', ...system.systems]).reduce(
       (dependencies: Dependencies, systemName: string) => {
         return Object.entries(this.config.systems[systemName] || {}).reduce(
@@ -178,6 +181,7 @@ _${this.config.name} depends on the following software_${
 }
 
 export interface WorkbeltOptions {
+  autoinstall?: boolean;
   config?: LoadedConfig;
   configPath: string;
   cwd: string;

@@ -7,6 +7,8 @@ export default class Install extends Command {
   static examples = ['$ workbelt install'];
 
   static flags: flags.Input<any> = {
+    'no-autoinstall': flags.boolean({ char: 'n', required: false }),
+    autoinstall: flags.boolean({ char: 'a', required: false }),
     config: flags.string({ char: 'c', required: false })
   };
 
@@ -20,6 +22,16 @@ export default class Install extends Command {
       ...(flags.config
         ? {
             configPath: flags.config
+          }
+        : {}),
+      ...(typeof flags.autoinstall !== 'undefined'
+        ? {
+            autoinstall: true
+          }
+        : {}),
+      ...(typeof flags['no-autoinstall'] !== 'undefined'
+        ? {
+            autoinstall: false
           }
         : {})
     });

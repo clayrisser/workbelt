@@ -8,6 +8,7 @@ import { PathReporter } from 'io-ts/PathReporter';
 import { HashMap } from '~/types';
 
 export const Dependency = t.type({
+  autoinstall: t.union([t.undefined, t.boolean]),
   description: t.union([t.undefined, t.string]),
   install: t.union([t.undefined, t.string]),
   instructions: t.union([t.undefined, t.string]),
@@ -149,6 +150,7 @@ export class ConfigLoader {
       if (/^https?:\/\//g.test(dependency)) {
         return {
           _cwd: cwd,
+          autoinstall: false,
           description: undefined,
           install: undefined,
           instructions: undefined,
@@ -158,6 +160,7 @@ export class ConfigLoader {
       }
       return {
         _cwd: cwd,
+        autoinstall: true,
         description: undefined,
         install: dependency,
         instructions: undefined,
@@ -167,6 +170,7 @@ export class ConfigLoader {
     }
     return {
       ...dependency,
+      autoinstall: true,
       sudo: !!dependency.sudo,
       _cwd: cwd
     };
