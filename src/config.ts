@@ -11,6 +11,7 @@ export const Dependency = t.type({
   description: t.union([t.undefined, t.string]),
   install: t.string,
   instructions: t.union([t.undefined, t.string]),
+  open: t.union([t.undefined, t.string]),
   sudo: t.union([t.undefined, t.boolean])
 });
 export type Dependency = t.TypeOf<typeof Dependency>;
@@ -149,6 +150,7 @@ export class ConfigLoader {
         description: undefined,
         install: dependency,
         instructions: undefined,
+        open: undefined,
         sudo: false
       };
     }

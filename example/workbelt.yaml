@@ -4,14 +4,25 @@ includes:
 autoinstall: false
 
 systems:
+  all:
+    pnpm:
+      install: |
+        npm install -g pnpm
+      open: https://pnpm.js.org
+
   darwin:
-    ggrep: |
-      brew install grep
-    gsed: |
-      brew install gsed
+    ggrep:
+      install: |
+        brew install grep
+      open: https://formulae.brew.sh/formula/grep
+    gsed:
+      install: |
+        brew install gsed
+      open: https://formulae.brew.sh/formula/gnu-sed
 
   linux:
-    docker: https://get.docker.com
-    # docker: |
-    #   curl -L https://get.docker.com | sh
-    # sudo: true
+    docker:
+      install: |
+        curl -L https://get.docker.com | sh
+      open: https://www.docker.com/get-started
+      sudo: true

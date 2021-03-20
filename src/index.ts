@@ -1,5 +1,6 @@
 import path from 'path';
 import Install from '~/install';
+import Report from '~/report';
 import system from '~/system';
 import {
   ConfigLoader,
@@ -15,6 +16,8 @@ export default class Workbelt {
 
   dependencies: Dependencies;
 
+  report = new Report();
+
   constructor(options: Partial<WorkbeltOptions> = {}) {
     this.options = {
       configPath: path.resolve('./workbelt.yaml'),
@@ -24,7 +27,7 @@ export default class Workbelt {
     const configLoader = new ConfigLoader();
     this.config =
       this.options.config || configLoader.load(this.options.configPath);
-    this.dependencies = Object.values([...system.systems]).reduce(
+    this.dependencies = Object.values(['all', ...system.systems]).reduce(
       (dependencies: Dependencies, systemName: string) => {
         return Object.entries(this.config.systems[systemName] || {}).reduce(
           (
@@ -45,11 +48,17 @@ export default class Workbelt {
     await Promise.all(
       Object.entries(this.dependencies).map(
         async ([dependencyName, dependency]: [string, LoadedDependency]) => {
-          const install = new Install(this.config, dependency, dependencyName);
+          const install = new Install(
+            this.config,
+            dependency,
+            dependencyName,
+            this.report
+          );
           await install.run();
         }
       )
     );
+    this.report.log();
   }
 }
 
