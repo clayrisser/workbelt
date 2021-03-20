@@ -9,7 +9,7 @@ import { HashMap } from '~/types';
 
 export const Dependency = t.type({
   description: t.union([t.undefined, t.string]),
-  install: t.string,
+  install: t.union([t.undefined, t.string]),
   instructions: t.union([t.undefined, t.string]),
   open: t.union([t.undefined, t.string]),
   sudo: t.union([t.undefined, t.boolean])
@@ -145,6 +145,16 @@ export class ConfigLoader {
     cwd: string
   ): LoadedDependency {
     if (typeof dependency === 'string') {
+      if (/^https?:\/\//g.test(dependency)) {
+        return {
+          _cwd: cwd,
+          description: undefined,
+          install: undefined,
+          instructions: undefined,
+          open: dependency,
+          sudo: false
+        };
+      }
       return {
         _cwd: cwd,
         description: undefined,

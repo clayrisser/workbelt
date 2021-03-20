@@ -1,48 +1,67 @@
 import execa, { ExecaError } from 'execa';
-import open from 'open';
+import openUrl from 'open';
 import Report from '~/report';
 import { LoadedDependency, LoadedConfig } from '~/config';
-
-const logger = console;
 
 export default class Install {
   constructor(
     private config: LoadedConfig,
-    private dependency: LoadedDependency,
-    _dependencyName: string,
-    private report = new Report()
-  ) {}
+    public dependency: LoadedDependency,
+    public dependencyName: string
+  ) {
+    this.report.addInfo(`## install ${this.dependencyName}
+`);
+  }
+
+  report = new Report();
 
   async run() {
-    const { install, open } = this.dependency;
-    if (/^https?:\/\//g.test(install)) {
-      await this.openUrl(install);
-    } else if (this.config.autoinstall) {
-      await this.runScript(install);
+    await this.runScript();
+    await this.openUrl();
+    await this.renderInstructions();
+    this.report.addInfo('\n');
+  }
+
+  async openUrl() {
+    const { open } = this.dependency;
+    if (!open) return;
+    await openUrl(open);
+    this.report
+      .addInfo(`you can find installation instructions at the link below
+
+${open.trim()}`);
+  }
+
+  async runScript() {
+    const { install, sudo } = this.dependency;
+    if (!install) return;
+    if (this.config.autoinstall) {
+      try {
+        await execa(install, {
+          cwd: this.dependency._cwd,
+          shell: true,
+          stdio: 'inherit'
+        });
+      } catch (err: any) {
+        const { exitCode } = err as ExecaError;
+        if (!exitCode) throw err;
+      }
+      this.report.addInfo(`ran script '${install}'`);
+    } else {
+      this.report.addInfo(
+        `please run the following to install ${this.dependencyName}
+
+\`\`\`sh
+${sudo ? 'sudo su\n' : ''}${install.trim()}
+\`\`\`
+`
+      );
     }
-    if (open) await this.openUrl(open);
   }
 
-  async openUrl(url: string) {
-    await open(url);
-    this.report.info(`opened ${url}`);
-  }
-
-  async runScript(script: string) {
-    try {
-      await execa(script, {
-        cwd: this.dependency._cwd,
-        shell: true,
-        stdio: 'inherit'
-      });
-    } catch (err: any) {
-      const { exitCode } = err as ExecaError;
-      if (!exitCode) throw err;
-    }
-    this.report.info(`ran script '${script}'`);
-  }
-
-  async renderInstructions(instructions: string) {
-    logger.info(instructions);
+  async renderInstructions() {
+    const { instructions } = this.dependency;
+    if (!instructions) return;
+    this.report.addInfo(instructions);
   }
 }
