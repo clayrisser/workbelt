@@ -12,7 +12,8 @@ export const Dependency = t.type({
   description: t.union([t.undefined, t.string]),
   install: t.union([t.undefined, t.string]),
   instructions: t.union([t.undefined, t.string]),
-  open: t.union([t.undefined, t.string]),
+  open: t.union([t.undefined, t.boolean]),
+  resources: t.union([t.undefined, t.array(t.string)]),
   sudo: t.union([t.undefined, t.boolean])
 });
 export type Dependency = t.TypeOf<typeof Dependency>;
@@ -154,7 +155,8 @@ export class ConfigLoader {
           description: undefined,
           install: undefined,
           instructions: undefined,
-          open: dependency,
+          open: true,
+          resources: [dependency],
           sudo: false
         };
       }
@@ -165,12 +167,14 @@ export class ConfigLoader {
         install: dependency,
         instructions: undefined,
         open: undefined,
+        resources: undefined,
         sudo: false
       };
     }
     return {
-      ...dependency,
       autoinstall: true,
+      open: true,
+      ...dependency,
       sudo: !!dependency.sudo,
       _cwd: cwd
     };

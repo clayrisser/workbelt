@@ -27,28 +27,28 @@ _**please install ${this.dependencyName} manually**_
   async run() {
     await this.runScript();
     await this.renderInstructions();
-    await this.openUrl();
+    await this.openResources();
   }
 
-  async openUrl() {
-    const { open, install } = this.dependency;
-    if (!open) return;
-    await openUrl(open);
+  async openResources() {
+    const { open, install, resources } = this.dependency;
+    if (!resources?.length) return;
     this.report.addInfo(`#### Resources
 
 you can find ${install ? 'additional ' : ''}installation instructions for ${
       this.dependencyName
-    } at the link below
+    } at the link${resources.length > 1 ? 's' : ''} below
 
-${open.trim()}
-`);
+${resources.map((resource: string) => resource).join('\n\n')}`);
+    if (!open) return;
+    await Promise.all(resources.map((resource: string) => openUrl(resource)));
   }
 
   async runScript() {
     const { install, sudo } = this.dependency;
-    if (!install) return;
-    const autoinstall = this.config.autoinstall && !sudo;
-    if (autoinstall) {
+    let { autoinstall } = this.dependency;
+    autoinstall = !!install && autoinstall && this.config.autoinstall;
+    if (autoinstall && !sudo && install) {
       this.spinner.info(`auto installing ${this.dependencyName}`);
       let exitCode = 0;
       const errChunks: string[] = [];
@@ -106,9 +106,9 @@ _**you do not need to do anything for ${this.dependencyName}**_
       }
     } else {
       const warning = `${this.dependencyName} was not auto installed${
-        this.config.autoinstall ? ' because it requires sudo privileges' : ''
+        autoinstall ? ' because it requires sudo privileges' : ''
       }`;
-      if (this.config.autoinstall) this.spinner.warn(warning);
+      if (autoinstall) this.spinner.warn(warning);
       this.report.infos[0] = `### ➜ ${this.dependencyName}`;
       this.report.infos.splice(
         1,
@@ -120,19 +120,22 @@ _**please install ${this.dependencyName} manually**_
 #### Instructions
 `
       );
-      this.report.addInfo(
-        `please run the following script to install ${this.dependencyName}
+      if (install) {
+        this.report.addInfo(
+          `please run the following script to install ${this.dependencyName}
 `
-      );
+        );
+      }
       this.status = InstallStatus.NotInstalled;
     }
-    this.report.addInfo(
-      `
-\`\`\`sh
+    if (install) {
+      this.report.addInfo(
+        `\`\`\`sh
 ${sudo ? 'sudo su\n' : ''}${install.trim()}
 \`\`\`
 `
-    );
+      );
+    }
   }
 
   async renderInstructions() {

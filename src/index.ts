@@ -19,6 +19,7 @@ import {
   LoadedDependency
 } from '~/config';
 
+const logger = console;
 const pkg: Pkg = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, '../package.json')).toString()
 );
@@ -138,7 +139,7 @@ _${this.config.name} depends on the following software_${
       this.report.addInfo(`## Failed to Auto Install
 `);
       resultsMap.failed.forEach((install: Install) => {
-        this.report.addInfo([install.report.md, '']);
+        this.report.addInfo([install.report.md, '\n']);
       });
       this.report.addInfo('');
     }
@@ -146,7 +147,7 @@ _${this.config.name} depends on the following software_${
       this.report.addInfo(`## Please Install Manually
 `);
       resultsMap.notInstalled.forEach((install: Install) => {
-        this.report.addInfo([install.report.md, '']);
+        this.report.addInfo([install.report.md, '\n']);
       });
       this.report.addInfo('');
     }
@@ -154,16 +155,20 @@ _${this.config.name} depends on the following software_${
       this.report.addInfo(`## Successfully Auto Installed
 `);
       resultsMap.installed.forEach((install: Install) => {
-        this.report.addInfo([install.report.md, '']);
+        this.report.addInfo([install.report.md, '\n']);
       });
       this.report.addInfo('');
     }
     const tmpNamespace = path.resolve(os.tmpdir(), pkg.name);
     await fs.mkdirs(tmpNamespace);
+    const reportName = `${snakeCase(this.config.name).replace(
+      /_/g,
+      '-'
+    )}-install-report`;
     const tmpPath = await fs.mkdtemp(`${tmpNamespace}/`);
-    const mdPath = path.resolve(tmpPath, 'info.md');
-    const pdfPath = path.resolve(tmpPath, 'info.pdf');
-    await this.report.writeMd(mdPath);
+    const mdPath = path.resolve(tmpPath, `${reportName}.md`);
+    const pdfPath = path.resolve(tmpPath, `${reportName}.pdf`);
+    await this.report.writeMd(mdPath, { trim: true });
     await mdToPdf({ path: mdPath }, { dest: pdfPath });
     switch (openFormat) {
       case ReportFormat.Pdf: {
@@ -176,7 +181,10 @@ _${this.config.name} depends on the following software_${
       }
     }
     this.spinner.succeed('generated report\n');
-    this.report.logMd();
+    this.report.logMd({ trim: true });
+    logger.info();
+    this.spinner.info(`access markdown report at ${mdPath}`);
+    this.spinner.info(`access pdf report at ${pdfPath}`);
   }
 }
 

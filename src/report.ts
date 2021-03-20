@@ -24,8 +24,12 @@ export default class Report {
     ];
   }
 
-  get md() {
-    return [
+  getMd(options: Partial<GetMdOptions> = {}) {
+    const { trim }: GetMdOptions = {
+      trim: false,
+      ...options
+    };
+    let md = [
       ...this.infos,
       ...(this.errors.length
         ? [
@@ -45,6 +49,12 @@ export default class Report {
           ]
         : [])
     ].join('\n');
+    if (trim) md = md.trim();
+    return md;
+  }
+
+  get md() {
+    return this.getMd();
   }
 
   logInfo() {
@@ -53,12 +63,23 @@ export default class Report {
     });
   }
 
-  logMd() {
-    logger.info(this.md);
+  logMd(options: Partial<LogMdOptions> = {}) {
+    const { trim }: LogMdOptions = {
+      trim: false,
+      ...options
+    };
+    logger.info(this.getMd({ trim }));
   }
 
-  async writeMd(filePath: string = path.resolve(process.cwd(), 'info.md')) {
-    await fs.writeFile(filePath, this.md);
+  async writeMd(
+    filePath: string = path.resolve(process.cwd(), 'info.md'),
+    options: Partial<WriteMdOptions> = {}
+  ) {
+    const { trim }: WriteMdOptions = {
+      trim: false,
+      ...options
+    };
+    await fs.writeFile(filePath, this.getMd({ trim }));
   }
 
   async writeInfo(filePath: string = path.resolve(process.cwd(), 'info.log')) {
@@ -77,4 +98,16 @@ export default class Report {
         .join('\n')
     );
   }
+}
+
+export interface WriteMdOptions {
+  trim: boolean;
+}
+
+export interface GetMdOptions {
+  trim: boolean;
+}
+
+export interface LogMdOptions {
+  trim: boolean;
 }
