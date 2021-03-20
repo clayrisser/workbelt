@@ -1,8 +1,12 @@
 import fs from 'fs-extra';
+import mapSeriesAsync from 'map-series-async';
 import open from 'open';
 import ora from 'ora';
 import os from 'os';
 import path from 'path';
+import snakeCase from 'lodash.snakecase';
+import username from 'username';
+import { format } from 'date-fns';
 import { mdToPdf } from 'md-to-pdf';
 import Install from '~/install';
 import Report from '~/report';
@@ -26,9 +30,11 @@ export default class Workbelt {
 
   dependencies: Dependencies;
 
-  report = new Report();
+  report = new Report('##');
 
   spinner = ora();
+
+  started = new Date();
 
   constructor(options: Partial<WorkbeltOptions> = {}) {
     this.options = {
@@ -57,34 +63,104 @@ export default class Workbelt {
   }
 
   async install() {
-    const results = await Promise.all(
-      Object.entries(this.dependencies).map(
-        async ([dependencyName, dependency]: [string, LoadedDependency]) => {
-          const install = new Install(this.config, dependency, dependencyName);
-          await install.run();
-          return install;
-        }
-      )
+    const results = await mapSeriesAsync(
+      Object.entries(this.dependencies),
+      async ([dependencyName, dependency]: [string, LoadedDependency]) => {
+        const install = new Install(
+          this.config,
+          dependency,
+          dependencyName,
+          this.spinner
+        );
+        await install.run();
+        return install;
+      }
     );
+    await this.createReport(results, ReportFormat.Pdf);
+  }
+
+  async createReport(results: Install[], openFormat?: ReportFormat) {
+    this.spinner.start('generating report');
+    const resultsMap: ResultsMap = {
+      failed: [],
+      notInstalled: [],
+      installed: []
+    };
+    results.forEach((install: Install) => {
+      resultsMap[install.status].push(install);
+    });
     this.report.addInfo(`# ${
       this.config.name ? `${this.config.name} ` : ''
     }Install Report
 
-`);
-    results.forEach((install: Install) => {
-      this.report.addInfo(install.report.infos);
-    });
-    await this.createReport(ReportFormat.Pdf);
-  }
+os: ${system.system} \\
+username: ${await username()} \\
+started: ${format(this.started, 'yyyy-MM-dd HH:mm:ss')} \\
+finished: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}
 
-  async createReport(openFormat?: ReportFormat) {
-    this.spinner.start('generating report');
+## Dependencies
+
+_${this.config.name} depends on the following software_${
+      resultsMap.failed.length
+        ? `
+
+#### Failed to Install`
+        : ''
+    }${resultsMap.failed.map(
+      (install: Install) => `
+  - [**✘ ${install.dependencyName}**](#✘-${snakeCase(install.dependencyName)})`
+    )}${
+      resultsMap.notInstalled.length
+        ? `
+
+#### Please Install`
+        : ''
+    }${resultsMap.notInstalled.map(
+      (install: Install) => `
+  - [**➜ ${install.dependencyName}**](#➜-${snakeCase(install.dependencyName)})`
+    )}${
+      resultsMap.installed.length
+        ? `
+
+#### Successfully Installed`
+        : ''
+    }${resultsMap.installed.map(
+      (install: Install) => `
+  - [**✔ ${install.dependencyName}**](#✔-${snakeCase(install.dependencyName)})`
+    )}
+
+
+`);
+    if (resultsMap.failed.length) {
+      this.report.addInfo(`## Failed to Install
+`);
+      resultsMap.failed.forEach((install: Install) => {
+        this.report.addInfo([install.report.md, '']);
+      });
+      this.report.addInfo('');
+    }
+    if (resultsMap.notInstalled.length) {
+      this.report.addInfo(`## Please Install
+`);
+      resultsMap.notInstalled.forEach((install: Install) => {
+        this.report.addInfo([install.report.md, '']);
+      });
+      this.report.addInfo('');
+    }
+    if (resultsMap.installed.length) {
+      this.report.addInfo(`## Successfully Installed
+`);
+      resultsMap.installed.forEach((install: Install) => {
+        this.report.addInfo([install.report.md, '']);
+      });
+      this.report.addInfo('');
+    }
     const tmpNamespace = path.resolve(os.tmpdir(), pkg.name);
     await fs.mkdirs(tmpNamespace);
     const tmpPath = await fs.mkdtemp(`${tmpNamespace}/`);
     const mdPath = path.resolve(tmpPath, 'info.md');
     const pdfPath = path.resolve(tmpPath, 'info.pdf');
-    await this.report.writeInfo(mdPath);
+    await this.report.writeMd(mdPath);
     await mdToPdf({ path: mdPath }, { dest: pdfPath });
     switch (openFormat) {
       case ReportFormat.Pdf: {
@@ -97,7 +173,7 @@ export default class Workbelt {
       }
     }
     this.spinner.succeed('generated report\n');
-    this.report.logInfo();
+    this.report.logMd();
   }
 }
 
@@ -116,4 +192,10 @@ export interface Pkg extends HashMap<any> {
 export enum ReportFormat {
   Md = 'md',
   Pdf = 'pdf'
+}
+
+export interface ResultsMap {
+  failed: Install[];
+  installed: Install[];
+  notInstalled: Install[];
 }

@@ -21,7 +21,7 @@ export class SystemDetector {
     return process.platform;
   });
 
-  private get system() {
+  get system() {
     return this.getSystem();
   }
 

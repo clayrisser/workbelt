@@ -3,10 +3,31 @@ includes:
 
 name: Q2
 
-autoinstall: false
+autoinstall: true
 
 systems:
-  all:
+  linux:
+    popcorn:
+      install: |
+        echo howdy 1>&2
+        false
+      open: https://example.com
+      instructions: |
+        do nothing
+
+    choco:
+      install: |
+        echo yay ayay yay
+      open: https://example.com
+      instructions: |
+        hahaha ha
+
+    pickle:
+      open: https://google.com
+      instructions: |
+        just a link
+
+  allz:
     pnpm:
       install: |
         npm install -g pnpm
@@ -22,7 +43,7 @@ systems:
         brew install gsed
       open: https://formulae.brew.sh/formula/gnu-sed
 
-  linux:
+  linuxz:
     docker:
       install: |
         curl -L https://get.docker.com | sh
