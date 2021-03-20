@@ -37,8 +37,9 @@ export interface LoadedSystems {
 }
 
 export const Config = t.type({
-  includes: t.union([t.undefined, t.array(t.string)]),
   autoinstall: t.union([t.undefined, t.boolean]),
+  includes: t.union([t.undefined, t.array(t.string)]),
+  name: t.union([t.undefined, t.string]),
   systems: Systems
 });
 export type Config = t.TypeOf<typeof Config>;

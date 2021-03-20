@@ -1,8 +1,9 @@
 import fs from 'fs-extra';
-import { mdToPdf } from 'md-to-pdf';
 import open from 'open';
+import ora from 'ora';
 import os from 'os';
 import path from 'path';
+import { mdToPdf } from 'md-to-pdf';
 import Install from '~/install';
 import Report from '~/report';
 import system from '~/system';
@@ -26,6 +27,8 @@ export default class Workbelt {
   dependencies: Dependencies;
 
   report = new Report();
+
+  spinner = ora();
 
   constructor(options: Partial<WorkbeltOptions> = {}) {
     this.options = {
@@ -63,17 +66,19 @@ export default class Workbelt {
         }
       )
     );
-    this.report.addInfo(`# Install Report
+    this.report.addInfo(`# ${
+      this.config.name ? `${this.config.name} ` : ''
+    }Install Report
 
 `);
     results.forEach((install: Install) => {
       this.report.addInfo(install.report.infos);
-      install.report.logInfo();
     });
     await this.createReport(ReportFormat.Pdf);
   }
 
   async createReport(openFormat?: ReportFormat) {
+    this.spinner.start('generating report');
     const tmpNamespace = path.resolve(os.tmpdir(), pkg.name);
     await fs.mkdirs(tmpNamespace);
     const tmpPath = await fs.mkdtemp(`${tmpNamespace}/`);
@@ -91,6 +96,8 @@ export default class Workbelt {
         break;
       }
     }
+    this.spinner.succeed('generated report\n');
+    this.report.logInfo();
   }
 }
 

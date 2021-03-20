@@ -13,6 +13,7 @@
     "mkdirs",
     "mkdtemp",
     "namespace",
+    "ora",
     "osx",
     "pdf",
     "redhat",
