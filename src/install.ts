@@ -13,6 +13,9 @@ export default class Install {
   ) {
     this.report.addInfo(`### ➜ ${this.dependencyName}
 
+_${this.dependencyName} was not auto installed_ \\
+_**please install ${this.dependencyName} manually**_
+
 #### Instructions
 `);
   }
@@ -61,13 +64,14 @@ ${open.trim()}
         this.report.infos[0] = `### ✔ ${this.dependencyName}`;
       } catch (err: any) {
         exitCode = (err as ExecaError).exitCode;
-        const message = `failed to install ${this.dependencyName}`;
+        const message = `failed to auto install ${this.dependencyName}`;
         this.report.infos[0] = `### ✘ ${this.dependencyName}`;
         this.report.infos.splice(
           1,
           0,
-          `_${message}_ \\
-_please install ${this.dependencyName} manually_
+          `
+_${message}_ \\
+_**please install ${this.dependencyName} manually**_
 
 #### Instructions
 `
@@ -87,11 +91,15 @@ _please install ${this.dependencyName} manually_
         this.report.infos.splice(
           1,
           0,
-          `#### Report
+          `
+_successfully auto installed ${this.dependencyName}_ \\
+_**you do not need to do anything for ${this.dependencyName}**_
+
+#### Report
 `
         );
         this.report.addInfo(
-          `installed ${this.dependencyName} by running the following script`
+          `${this.dependencyName} was auto installed by running the following script`
         );
         this.status = InstallStatus.Installed;
       }

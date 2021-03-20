@@ -104,7 +104,7 @@ _${this.config.name} depends on the following software_${
       resultsMap.failed.length
         ? `
 
-#### Failed to Install`
+#### Failed to Auto Install`
         : ''
     }${resultsMap.failed.map(
       (install: Install) => `
@@ -113,7 +113,7 @@ _${this.config.name} depends on the following software_${
       resultsMap.notInstalled.length
         ? `
 
-#### Please Install`
+#### Please Install Manually`
         : ''
     }${resultsMap.notInstalled.map(
       (install: Install) => `
@@ -122,7 +122,7 @@ _${this.config.name} depends on the following software_${
       resultsMap.installed.length
         ? `
 
-#### Successfully Installed`
+#### Successfully Auto Installed`
         : ''
     }${resultsMap.installed.map(
       (install: Install) => `
@@ -132,7 +132,7 @@ _${this.config.name} depends on the following software_${
 
 `);
     if (resultsMap.failed.length) {
-      this.report.addInfo(`## Failed to Install
+      this.report.addInfo(`## Failed to Auto Install
 `);
       resultsMap.failed.forEach((install: Install) => {
         this.report.addInfo([install.report.md, '']);
@@ -140,7 +140,7 @@ _${this.config.name} depends on the following software_${
       this.report.addInfo('');
     }
     if (resultsMap.notInstalled.length) {
-      this.report.addInfo(`## Please Install
+      this.report.addInfo(`## Please Install Manually
 `);
       resultsMap.notInstalled.forEach((install: Install) => {
         this.report.addInfo([install.report.md, '']);
@@ -148,7 +148,7 @@ _${this.config.name} depends on the following software_${
       this.report.addInfo('');
     }
     if (resultsMap.installed.length) {
-      this.report.addInfo(`## Successfully Installed
+      this.report.addInfo(`## Successfully Auto Installed
 `);
       resultsMap.installed.forEach((install: Install) => {
         this.report.addInfo([install.report.md, '']);
