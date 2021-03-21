@@ -42,6 +42,7 @@ export default class Workbelt {
     this.options = {
       configPath: path.resolve('./workbelt.yaml'),
       cwd: process.cwd(),
+      open: OpenMode.None,
       ...options
     };
     const configLoader = new ConfigLoader();
@@ -100,6 +101,7 @@ export default class Workbelt {
       async (dependency: LoadedDependency) => {
         const install = new Install(
           this.config,
+          this.options,
           dependency,
           dependency._name,
           results,
@@ -217,10 +219,12 @@ _${this.config.name} depends on the following software_${
     const mdPath = path.resolve(tmpPath, `${reportName}.md`);
     const pdfPath = path.resolve(tmpPath, `${reportName}.pdf`);
     await this.report.writeMd(mdPath, { trim: true });
-    await mdToPdf({ path: mdPath }, { dest: pdfPath });
+    if (this.options.pdf) {
+      await mdToPdf({ path: mdPath }, { dest: pdfPath });
+    }
     switch (openFormat) {
       case ReportFormat.Pdf: {
-        await open(`file://${pdfPath}`);
+        if (this.options.pdf) await open(`file://${pdfPath}`);
         break;
       }
       case ReportFormat.Md: {
@@ -232,7 +236,7 @@ _${this.config.name} depends on the following software_${
     this.report.logMd({ trim: true });
     logger.info();
     this.spinner.info(`access markdown report at ${mdPath}`);
-    this.spinner.info(`access pdf report at ${pdfPath}`);
+    if (this.options.pdf) this.spinner.info(`access pdf report at ${pdfPath}`);
   }
 }
 
@@ -241,6 +245,8 @@ export interface WorkbeltOptions {
   config?: LoadedConfig;
   configPath: string;
   cwd: string;
+  open?: OpenMode;
+  pdf?: boolean;
 }
 
 export interface Pkg extends HashMap<any> {
@@ -259,4 +265,10 @@ export interface ResultsMap {
   failed: Install[];
   installed: Install[];
   notInstalled: Install[];
+}
+
+export enum OpenMode {
+  All = 'all',
+  Marked = 'marked',
+  None = 'none'
 }

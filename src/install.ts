@@ -4,10 +4,12 @@ import ora from 'ora';
 import which from 'which';
 import Report from '~/report';
 import { LoadedDependency, LoadedConfig } from '~/config';
+import { OpenMode, WorkbeltOptions } from '~/index';
 
 export default class Install {
   constructor(
     private config: LoadedConfig,
+    private options: WorkbeltOptions,
     public dependency: LoadedDependency,
     public dependencyName: string,
     private results: Install[],
@@ -67,8 +69,12 @@ you can find ${install ? 'additional ' : ''}installation instructions for ${
     } at the link${resources.length > 1 ? 's' : ''} below
 
 ${resources.map((resource: string) => resource).join('\n\n')}`);
-    if (!open) return;
-    await Promise.all(resources.map((resource: string) => openUrl(resource)));
+    if (
+      this.options.open === OpenMode.All ||
+      (this.options.open === OpenMode.Marked && open)
+    ) {
+      await Promise.all(resources.map((resource: string) => openUrl(resource)));
+    }
   }
 
   private async _runScript() {
