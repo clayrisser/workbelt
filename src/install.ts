@@ -71,7 +71,9 @@ you can find ${install ? 'additional ' : ''}installation instructions for ${
 ${resources.map((resource: string) => resource).join('\n\n')}`);
     if (
       this.options.open === OpenMode.All ||
-      (this.options.open === OpenMode.Marked && open)
+      (this.options.open === OpenMode.Marked &&
+        open &&
+        this.status !== InstallStatus.AlreadyInstalled)
     ) {
       await Promise.all(resources.map((resource: string) => openUrl(resource)));
     }

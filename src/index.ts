@@ -43,6 +43,7 @@ export default class Workbelt {
       configPath: path.resolve('./workbelt.yaml'),
       cwd: process.cwd(),
       open: OpenMode.None,
+      report: true,
       ...options
     };
     const configLoader = new ConfigLoader();
@@ -116,7 +117,6 @@ export default class Workbelt {
   }
 
   async createReport(results: Install[], openFormat?: ReportFormat) {
-    this.spinner.start('generating report');
     const resultsMap: ResultsMap = {
       alreadyInstalled: [],
       failed: [],
@@ -126,9 +126,11 @@ export default class Workbelt {
     results.forEach((install: Install) => {
       resultsMap[install.status].push(install);
     });
-    this.report.addInfo(`# ${
-      this.config.name ? `${this.config.name} ` : ''
-    }Install Report
+    if (this.options.report) {
+      this.spinner.start('generating report');
+      this.report.addInfo(`# ${
+        this.config.name ? `${this.config.name} ` : ''
+      }Install Report
 
 os: ${system.system} \\
 username: ${await username()} \\
@@ -138,105 +140,104 @@ finished: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}
 ## Dependencies
 
 _${this.config.name} depends on the following software_${
-      resultsMap.failed.length
-        ? `
+        resultsMap.failed.length
+          ? `
 
 #### Failed to Auto Install`
-        : ''
-    }${resultsMap.failed.map(
-      (install: Install) => `
+          : ''
+      }${resultsMap.failed.map(
+        (install: Install) => `
   - [**✘ ${install.dependencyName}**](#✘-${snakeCase(install.dependencyName)})`
-    )}${
-      resultsMap.notInstalled.length
-        ? `
+      )}${
+        resultsMap.notInstalled.length
+          ? `
 
 #### Please Install Manually`
-        : ''
-    }${resultsMap.notInstalled.map(
-      (install: Install) => `
+          : ''
+      }${resultsMap.notInstalled.map(
+        (install: Install) => `
   - [**➜ ${install.dependencyName}**](#➜-${snakeCase(install.dependencyName)})`
-    )}${
-      resultsMap.installed.length
-        ? `
+      )}${
+        resultsMap.installed.length
+          ? `
 
 #### Successfully Auto Installed`
-        : ''
-    }${resultsMap.installed.map(
-      (install: Install) => `
+          : ''
+      }${resultsMap.installed.map(
+        (install: Install) => `
   - [**✔ ${install.dependencyName}**](#✔-${snakeCase(install.dependencyName)})`
-    )}${
-      resultsMap.alreadyInstalled.length
-        ? `
+      )}${
+        resultsMap.alreadyInstalled.length
+          ? `
 
 #### Already Installed`
-        : ''
-    }${resultsMap.alreadyInstalled.map(
-      (install: Install) => `
+          : ''
+      }${resultsMap.alreadyInstalled.map(
+        (install: Install) => `
   - [**✔ ${install.dependencyName}**](#✔-${snakeCase(install.dependencyName)})`
-    )}
+      )}
 
 
 `);
-    if (resultsMap.failed.length) {
-      this.report.addInfo(`## Failed to Auto Install
+      if (resultsMap.failed.length) {
+        this.report.addInfo(`## Failed to Auto Install
 `);
-      resultsMap.failed.forEach((install: Install) => {
-        this.report.addInfo([install.report.md, '\n']);
-      });
-      this.report.addInfo('');
-    }
-    if (resultsMap.notInstalled.length) {
-      this.report.addInfo(`## Please Install Manually
+        resultsMap.failed.forEach((install: Install) => {
+          this.report.addInfo([install.report.md, '\n']);
+        });
+        this.report.addInfo('');
+      }
+      if (resultsMap.notInstalled.length) {
+        this.report.addInfo(`## Please Install Manually
 `);
-      resultsMap.notInstalled.forEach((install: Install) => {
-        this.report.addInfo([install.report.md, '\n']);
-      });
-      this.report.addInfo('');
-    }
-    if (resultsMap.installed.length) {
-      this.report.addInfo(`## Successfully Auto Installed
+        resultsMap.notInstalled.forEach((install: Install) => {
+          this.report.addInfo([install.report.md, '\n']);
+        });
+        this.report.addInfo('');
+      }
+      if (resultsMap.installed.length) {
+        this.report.addInfo(`## Successfully Auto Installed
 `);
-      resultsMap.installed.forEach((install: Install) => {
-        this.report.addInfo([install.report.md, '\n']);
-      });
-      this.report.addInfo('');
-    }
-    if (resultsMap.alreadyInstalled.length) {
-      this.report.addInfo(`## Already Installed
+        resultsMap.installed.forEach((install: Install) => {
+          this.report.addInfo([install.report.md, '\n']);
+        });
+        this.report.addInfo('');
+      }
+      if (resultsMap.alreadyInstalled.length) {
+        this.report.addInfo(`## Already Installed
 `);
-      resultsMap.alreadyInstalled.forEach((install: Install) => {
-        this.report.addInfo([install.report.md, '\n']);
-      });
-      this.report.addInfo('');
-    }
-    const tmpNamespace = path.resolve(os.tmpdir(), pkg.name);
-    await fs.mkdirs(tmpNamespace);
-    const reportName = `${snakeCase(this.config.name).replace(
-      /_/g,
-      '-'
-    )}-install-report`;
-    const tmpPath = await fs.mkdtemp(`${tmpNamespace}/`);
-    const mdPath = path.resolve(tmpPath, `${reportName}.md`);
-    const pdfPath = path.resolve(tmpPath, `${reportName}.pdf`);
-    await this.report.writeMd(mdPath, { trim: true });
-    if (this.options.pdf) {
+        resultsMap.alreadyInstalled.forEach((install: Install) => {
+          this.report.addInfo([install.report.md, '\n']);
+        });
+        this.report.addInfo('');
+      }
+      const tmpNamespace = path.resolve(os.tmpdir(), pkg.name);
+      await fs.mkdirs(tmpNamespace);
+      const reportName = `${snakeCase(this.config.name).replace(
+        /_/g,
+        '-'
+      )}-install-report`;
+      const tmpPath = await fs.mkdtemp(`${tmpNamespace}/`);
+      const mdPath = path.resolve(tmpPath, `${reportName}.md`);
+      const pdfPath = path.resolve(tmpPath, `${reportName}.pdf`);
+      await this.report.writeMd(mdPath, { trim: true });
       await mdToPdf({ path: mdPath }, { dest: pdfPath });
-    }
-    switch (openFormat) {
-      case ReportFormat.Pdf: {
-        if (this.options.pdf) await open(`file://${pdfPath}`);
-        break;
+      switch (openFormat) {
+        case ReportFormat.Pdf: {
+          await open(`file://${pdfPath}`);
+          break;
+        }
+        case ReportFormat.Md: {
+          await open(`file://${mdPath}`);
+          break;
+        }
       }
-      case ReportFormat.Md: {
-        await open(`file://${mdPath}`);
-        break;
-      }
+      this.spinner.succeed('generated report\n');
+      this.report.logMd({ trim: true });
+      logger.info();
+      this.spinner.info(`access markdown report at ${mdPath}`);
+      this.spinner.info(`access pdf report at ${pdfPath}`);
     }
-    this.spinner.succeed('generated report\n');
-    this.report.logMd({ trim: true });
-    logger.info();
-    this.spinner.info(`access markdown report at ${mdPath}`);
-    if (this.options.pdf) this.spinner.info(`access pdf report at ${pdfPath}`);
   }
 }
 
@@ -246,7 +247,7 @@ export interface WorkbeltOptions {
   configPath: string;
   cwd: string;
   open?: OpenMode;
-  pdf?: boolean;
+  report?: boolean;
 }
 
 export interface Pkg extends HashMap<any> {

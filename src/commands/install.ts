@@ -7,10 +7,25 @@ export default class Install extends Command {
   static examples = ['$ workbelt install'];
 
   static flags: flags.Input<any> = {
-    'no-autoinstall': flags.boolean({ char: 'n', required: false }),
-    'no-pdf': flags.boolean({ required: false }),
-    autoinstall: flags.boolean({ char: 'a', required: false }),
-    config: flags.string({ char: 'c', required: false }),
+    'no-autoinstall': flags.boolean({
+      char: 'n',
+      description: 'never auto install systems',
+      required: false
+    }),
+    'no-report': flags.boolean({
+      required: false,
+      description: 'do not generate report'
+    }),
+    autoinstall: flags.boolean({
+      char: 'a',
+      required: false,
+      description: 'always auto install systems'
+    }),
+    config: flags.string({
+      char: 'c',
+      required: false,
+      description: 'custom workbelt config path'
+    }),
     'open-all': flags.boolean({
       char: 'O',
       description: 'opens all resources',
@@ -18,7 +33,7 @@ export default class Install extends Command {
     }),
     open: flags.boolean({
       char: 'o',
-      description: 'opens all resources not marked open:false',
+      description: 'opens resources not already installed',
       required: false
     })
   };
@@ -32,8 +47,8 @@ export default class Install extends Command {
     const workbelt = new Workbelt({
       open: OpenMode.None,
       ...(flags.open ? { open: OpenMode.Marked } : {}),
+      ...(flags['no-report'] ? { report: false } : { report: true }),
       ...(flags['open-all'] ? { open: OpenMode.All } : {}),
-      ...(flags['no-pdf'] ? { pdf: false } : { pdf: true }),
       ...(flags.config
         ? {
             configPath: flags.config
