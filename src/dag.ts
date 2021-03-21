@@ -29,9 +29,13 @@ export default class Dag<D> {
   }
 
   get ordered(): Node<D>[] {
+    const vertexes = new Set<string>([]);
     const nodes: Node<D>[] = [];
     this.dags.map((dag: IDag<D>) =>
       this._walk(dag, (dag: IDag<D>) => {
+        const i = nodes.findIndex((node: Node<D>) => node.name === dag.vertex);
+        if (i > -1) nodes.splice(i, 1);
+        vertexes.add(dag.vertex);
         nodes.push(dag.node);
       })
     );

@@ -1,7 +1,7 @@
 includes:
   - '**/workbelt.yaml'
 
-name: siliconhills
+name: SiliconHills
 
 autoinstall: false
 
@@ -21,7 +21,32 @@ systems:
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
       resources:
         - https://github.com/nvm-sh/nvm
-      instructions: you will need to reload your terminal after installation completes
+      instructions: |
+        you will need to reload your terminal after installation completes
+
+  linux:
+    docker:
+      install: |
+        sudo true && curl -L https://get.docker.com | sudo sh
+      resources:
+        - https://www.docker.com/get-started
+      sudo: true
+
+  rhel:
+    make:
+      install: |
+        sudo yum install -y make
+      resources:
+        - https://www.gnu.org/software/make
+      sudo: true
+
+  debian:
+    make:
+      install: |
+        sudo apt install -y make
+      resources:
+        - https://www.gnu.org/software/make
+      sudo: true
 
   darwin:
     ggrep:
@@ -42,27 +67,3 @@ systems:
       resources:
         - https://formulae.brew.sh/formula/make
         - https://www.gnu.org/software/make
-
-  debian:
-    make:
-      install: |
-        apt install -y make
-      resources:
-        - https://www.gnu.org/software/make
-      sudo: true
-
-  rhel:
-    make:
-      install: |
-        yum install -y make
-      resources:
-        - https://www.gnu.org/software/make
-      sudo: true
-
-  linux:
-    docker:
-      install: |
-        curl -L https://get.docker.com | sh
-      resources:
-        - https://www.docker.com/get-started
-      sudo: true

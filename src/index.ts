@@ -94,15 +94,18 @@ export default class Workbelt {
   }
 
   async install() {
-    const results = await mapSeriesAsync(
+    const results: Install[] = [];
+    await mapSeriesAsync(
       this.dependencies,
       async (dependency: LoadedDependency) => {
         const install = new Install(
           this.config,
           dependency,
           dependency._name,
+          results,
           this.spinner
         );
+        results.push(install);
         await install.run();
         return install;
       }

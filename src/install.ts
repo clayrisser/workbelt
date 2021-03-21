@@ -9,6 +9,7 @@ export default class Install {
     private config: LoadedConfig,
     public dependency: LoadedDependency,
     public dependencyName: string,
+    private results: Install[],
     private spinner = ora()
   ) {
     this.report.addInfo(`### ➜ ${this.dependencyName}
@@ -25,12 +26,12 @@ _**please install ${this.dependencyName} manually**_
   status = InstallStatus.NotInstalled;
 
   async run() {
-    await this.runScript();
-    await this.renderInstructions();
-    await this.openResources();
+    await this._runScript();
+    await this._renderInstructions();
+    await this._openResources();
   }
 
-  async openResources() {
+  private async _openResources() {
     const { open, install, resources } = this.dependency;
     if (!resources?.length) return;
     this.report.addInfo(`#### Resources
@@ -44,11 +45,12 @@ ${resources.map((resource: string) => resource).join('\n\n')}`);
     await Promise.all(resources.map((resource: string) => openUrl(resource)));
   }
 
-  async runScript() {
+  private async _runScript() {
     const { install, sudo } = this.dependency;
     let { autoinstall } = this.dependency;
+    const dependsOnNotInstalled = this._getDependsOnNotInstalled();
     autoinstall = !!install && autoinstall && this.config.autoinstall;
-    if (autoinstall && !sudo && install) {
+    if (autoinstall && !sudo && !dependsOnNotInstalled.length && install) {
       this.spinner.info(`auto installing ${this.dependencyName}`);
       let exitCode = 0;
       const errChunks: string[] = [];
@@ -105,9 +107,24 @@ _**you do not need to do anything for ${this.dependencyName}**_
         this.status = InstallStatus.Installed;
       }
     } else {
-      const warning = `${this.dependencyName} was not auto installed${
-        autoinstall ? ' because it requires sudo privileges' : ''
-      }`;
+      let warning = `${this.dependencyName} was not auto installed`;
+      if (autoinstall) {
+        if (dependsOnNotInstalled.length) {
+          warning = `${warning}${
+            autoinstall
+              ? ` because it depends on ${this._listToString(
+                  dependsOnNotInstalled
+                )} which ${
+                  dependsOnNotInstalled.length > 1 ? 'are' : 'is'
+                } not installed`
+              : ''
+          }`;
+        } else if (sudo) {
+          warning = `${warning}${
+            autoinstall ? ' because it requires sudo privileges' : ''
+          }`;
+        }
+      }
       if (autoinstall) this.spinner.warn(warning);
       this.report.infos[0] = `### ➜ ${this.dependencyName}`;
       this.report.infos.splice(
@@ -131,18 +148,38 @@ _**please install ${this.dependencyName} manually**_
     if (install) {
       this.report.addInfo(
         `\`\`\`sh
-${sudo ? 'sudo su\n' : ''}${install.trim()}
+${install.trim()}
 \`\`\`
 `
       );
     }
   }
 
-  async renderInstructions() {
+  private async _renderInstructions() {
     const { instructions } = this.dependency;
     if (!instructions) return;
     this.report.addInfo(`${instructions.trim()}
 `);
+  }
+
+  private _listToString(arr: string[]) {
+    const start = arr.slice(0, -1).join(', ');
+    const end = arr.slice(-1);
+    let comma = arr.length > 2 ? ', and ' : ' and ';
+    if (arr.length <= 1) comma = '';
+    return [start, end].join(comma);
+  }
+
+  private _getDependsOnNotInstalled(): string[] {
+    const dependsOn = new Set(this.dependency.depends_on);
+    return this.results
+      .filter((install: Install) => {
+        return (
+          dependsOn.has(install.dependencyName) &&
+          install.status !== InstallStatus.Installed
+        );
+      })
+      .map((install: Install) => install.dependencyName);
   }
 }
 
