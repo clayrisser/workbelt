@@ -34,12 +34,27 @@ _**please install ${this.dependencyName} manually**_
   }
 
   private async _detect() {
+    if (this.dependency.detect) {
+      try {
+        await execa(this.dependency.detect, { shell: true });
+        this.status = InstallStatus.AlreadyInstalled;
+        return true;
+      } catch (err) {
+        const error = err as ExecaError;
+        if (!error.exitCode) throw err;
+      }
+      return false;
+    }
     try {
       const result = await which(this.dependencyName);
-      if (result) this.status = InstallStatus.AlreadyInstalled;
+      if (result) {
+        this.status = InstallStatus.AlreadyInstalled;
+        return true;
+      }
     } catch (err) {
       if (err.code !== 'ENOENT') throw err;
     }
+    return false;
   }
 
   private async _openResources() {
