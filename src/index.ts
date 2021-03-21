@@ -8,6 +8,7 @@ import snakeCase from 'lodash.snakecase';
 import username from 'username';
 import { format } from 'date-fns';
 import { mdToPdf } from 'md-to-pdf';
+import Dag, { Node } from '~/dag';
 import Install from '~/install';
 import Report from '~/report';
 import system from '~/system';
@@ -29,13 +30,13 @@ export default class Workbelt {
 
   config: LoadedConfig;
 
-  dependencies: Dependencies;
-
   report = new Report('##');
 
   spinner = ora();
 
   started = new Date();
+
+  private _dependencies?: LoadedDependency[];
 
   constructor(options: Partial<WorkbeltOptions> = {}) {
     this.options = {
@@ -49,7 +50,11 @@ export default class Workbelt {
     if (typeof this.options.autoinstall !== 'undefined') {
       this.config.autoinstall = this.options.autoinstall;
     }
-    this.dependencies = Object.values(['all', ...system.systems]).reduce(
+  }
+
+  get dependencies(): LoadedDependency[] {
+    if (this._dependencies) return this._dependencies;
+    const dependencies = Object.values(['all', ...system.systems]).reduce(
       (dependencies: Dependencies, systemName: string) => {
         return Object.entries(this.config.systems[systemName] || {}).reduce(
           (
@@ -64,16 +69,38 @@ export default class Workbelt {
       },
       {}
     );
+    const dependenciesDag = new Dag(
+      Object.entries(dependencies).map<Node<LoadedDependency>>(
+        ([dependencyName, loadedDependency]: [string, LoadedDependency]) => {
+          const node: Node<LoadedDependency> = {
+            name: dependencyName,
+            data: loadedDependency,
+            ...(loadedDependency.depends_on?.length
+              ? { dependencies: loadedDependency.depends_on }
+              : {})
+          };
+          return node;
+        }
+      )
+    );
+    this._dependencies = dependenciesDag.ordered.reduce(
+      (dependencies: LoadedDependency[], node: Node<LoadedDependency>) => {
+        if (node.data) dependencies.push(node.data);
+        return dependencies;
+      },
+      []
+    );
+    return this._dependencies;
   }
 
   async install() {
     const results = await mapSeriesAsync(
-      Object.entries(this.dependencies),
-      async ([dependencyName, dependency]: [string, LoadedDependency]) => {
+      this.dependencies,
+      async (dependency: LoadedDependency) => {
         const install = new Install(
           this.config,
           dependency,
-          dependencyName,
+          dependency._name,
           this.spinner
         );
         await install.run();

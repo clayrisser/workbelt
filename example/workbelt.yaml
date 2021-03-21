@@ -12,6 +12,8 @@ systems:
         npm install -g pnpm
       resources:
         - https://pnpm.js.org
+      depends_on:
+        - nvm
 
   unix:
     nvm:

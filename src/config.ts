@@ -9,6 +9,7 @@ import { HashMap } from '~/types';
 
 export const Dependency = t.type({
   autoinstall: t.union([t.undefined, t.boolean]),
+  depends_on: t.union([t.undefined, t.array(t.string)]),
   description: t.union([t.undefined, t.string]),
   install: t.union([t.undefined, t.string]),
   instructions: t.union([t.undefined, t.string]),
@@ -19,6 +20,7 @@ export const Dependency = t.type({
 export type Dependency = t.TypeOf<typeof Dependency>;
 export interface LoadedDependency extends Omit<Dependency, 'sudo'> {
   _cwd: string;
+  _name: string;
   sudo: boolean;
 }
 
@@ -135,7 +137,11 @@ export class ConfigLoader {
         [dependencyName, dependency]: [string, string | Dependency | null]
       ) => {
         if (dependency) {
-          loadedSystem[dependencyName] = this.loadDependency(dependency, cwd);
+          loadedSystem[dependencyName] = this.loadDependency(
+            dependency,
+            dependencyName,
+            cwd
+          );
         }
         return loadedSystem;
       },
@@ -145,13 +151,16 @@ export class ConfigLoader {
 
   private loadDependency(
     dependency: Dependency | string,
+    dependencyName: string,
     cwd: string
   ): LoadedDependency {
     if (typeof dependency === 'string') {
       if (/^https?:\/\//g.test(dependency)) {
         return {
           _cwd: cwd,
+          _name: dependencyName,
           autoinstall: false,
+          depends_on: undefined,
           description: undefined,
           install: undefined,
           instructions: undefined,
@@ -162,7 +171,9 @@ export class ConfigLoader {
       }
       return {
         _cwd: cwd,
+        _name: dependencyName,
         autoinstall: true,
+        depends_on: undefined,
         description: undefined,
         install: dependency,
         instructions: undefined,
@@ -176,7 +187,8 @@ export class ConfigLoader {
       open: true,
       ...dependency,
       sudo: !!dependency.sudo,
-      _cwd: cwd
+      _cwd: cwd,
+      _name: dependencyName
     };
   }
 }

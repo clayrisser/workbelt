@@ -15,7 +15,7 @@ export default class Dag<D> {
     }, {});
     this.dags = nodes.reduce((dags: IDag<D>[], node: Node<D>) => {
       if (this._dagMap[node.name]) {
-        if (node.dependencies) {
+        if (node.dependencies?.length) {
           node.dependencies.forEach((dependency: string) => {
             const dag = this._dagMap[node.name];
             this._dagMap[dependency]?.edges?.push(dag);
