@@ -1,6 +1,7 @@
 import execa, { ExecaError } from 'execa';
 import openUrl from 'open';
 import ora from 'ora';
+import which from 'which';
 import Report from '~/report';
 import { LoadedDependency, LoadedConfig } from '~/config';
 
@@ -26,9 +27,19 @@ _**please install ${this.dependencyName} manually**_
   status = InstallStatus.NotInstalled;
 
   async run() {
+    await this._detect();
     await this._runScript();
     await this._renderInstructions();
     await this._openResources();
+  }
+
+  private async _detect() {
+    try {
+      const result = await which(this.dependencyName);
+      if (result) this.status = InstallStatus.AlreadyInstalled;
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
   }
 
   private async _openResources() {
@@ -49,8 +60,12 @@ ${resources.map((resource: string) => resource).join('\n\n')}`);
     const { install, sudo } = this.dependency;
     let { autoinstall } = this.dependency;
     const dependsOnNotInstalled = this._getDependsOnNotInstalled();
-    autoinstall = !!install && autoinstall && this.config.autoinstall;
-    if (autoinstall && !sudo && !dependsOnNotInstalled.length && install) {
+    autoinstall =
+      !!install &&
+      autoinstall &&
+      this.config.autoinstall &&
+      this.status !== InstallStatus.AlreadyInstalled;
+    if (!dependsOnNotInstalled.length && !sudo && autoinstall && install) {
       this.spinner.info(`auto installing ${this.dependencyName}`);
       let exitCode = 0;
       const errChunks: string[] = [];
@@ -87,15 +102,18 @@ _**please install ${this.dependencyName} manually**_
         this.report.addInfo(
           `run the following script to install ${this.dependencyName}`
         );
-        this.status = InstallStatus.Failed;
+        if (this.status !== InstallStatus.AlreadyInstalled) {
+          this.status = InstallStatus.Failed;
+        }
       }
       if (!exitCode) {
-        this.spinner.succeed(`auto installed ${this.dependencyName}`);
+        const message = `auto installed ${this.dependencyName}`;
+        this.spinner.succeed(message);
         this.report.infos.splice(
           1,
           0,
           `
-_successfully auto installed ${this.dependencyName}_ \\
+_successfully ${message}_ \\
 _**you do not need to do anything for ${this.dependencyName}**_
 
 #### Report
@@ -104,7 +122,9 @@ _**you do not need to do anything for ${this.dependencyName}**_
         this.report.addInfo(
           `${this.dependencyName} was auto installed by running the following script`
         );
-        this.status = InstallStatus.Installed;
+        if (this.status !== InstallStatus.AlreadyInstalled) {
+          this.status = InstallStatus.Installed;
+        }
       }
     } else {
       let warning = `${this.dependencyName} was not auto installed`;
@@ -126,24 +146,43 @@ _**you do not need to do anything for ${this.dependencyName}**_
         }
       }
       if (autoinstall) this.spinner.warn(warning);
-      this.report.infos[0] = `### ➜ ${this.dependencyName}`;
-      this.report.infos.splice(
-        1,
-        0,
-        `
+      if (this.status === InstallStatus.AlreadyInstalled) {
+        this.report.infos[0] = `### ✔ ${this.dependencyName}`;
+        const message = `${this.dependencyName} already installed`;
+        this.spinner.info(message);
+        this.report.infos.splice(
+          1,
+          0,
+          `
+_${message}_ \\
+_**you do not need to do anything for ${this.dependencyName}**_
+
+#### Report
+`
+        );
+        this.report.addInfo(
+          `${this.dependencyName} was possibly installed by running the following script`
+        );
+      } else {
+        this.report.infos[0] = `### ➜ ${this.dependencyName}`;
+        this.report.infos.splice(
+          1,
+          0,
+          `
 _${warning}_ \\
 _**please install ${this.dependencyName} manually**_
 
 #### Instructions
 `
-      );
-      if (install) {
-        this.report.addInfo(
-          `please run the following script to install ${this.dependencyName}
-`
         );
+        if (install) {
+          this.report.addInfo(
+            `please run the following script to install ${this.dependencyName}
+`
+          );
+        }
+        this.status = InstallStatus.NotInstalled;
       }
-      this.status = InstallStatus.NotInstalled;
     }
     if (install) {
       this.report.addInfo(
@@ -176,7 +215,8 @@ ${install.trim()}
       .filter((install: Install) => {
         return (
           dependsOn.has(install.dependencyName) &&
-          install.status !== InstallStatus.Installed
+          install.status !== InstallStatus.Installed &&
+          install.status !== InstallStatus.AlreadyInstalled
         );
       })
       .map((install: Install) => install.dependencyName);
@@ -184,6 +224,7 @@ ${install.trim()}
 }
 
 export enum InstallStatus {
+  AlreadyInstalled = 'alreadyInstalled',
   Failed = 'failed',
   Installed = 'installed',
   NotInstalled = 'notInstalled'

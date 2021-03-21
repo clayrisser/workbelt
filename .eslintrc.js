@@ -31,7 +31,7 @@ module.exports = {
     'import/prefer-default-export': 'off',
     'max-classes-per-file': 'off',
     'max-lines': ['error', 500],
-    'max-lines-per-function': ['warn', 120],
+    'max-lines-per-function': ['warn', 150],
     'no-await-in-loop': 'off',
     'no-empty-function': ['warn', { allow: ['constructors'] }],
     'no-extra-boolean-cast': 'off',

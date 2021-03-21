@@ -116,9 +116,10 @@ export default class Workbelt {
   async createReport(results: Install[], openFormat?: ReportFormat) {
     this.spinner.start('generating report');
     const resultsMap: ResultsMap = {
+      alreadyInstalled: [],
       failed: [],
-      notInstalled: [],
-      installed: []
+      installed: [],
+      notInstalled: []
     };
     results.forEach((install: Install) => {
       resultsMap[install.status].push(install);
@@ -161,6 +162,15 @@ _${this.config.name} depends on the following software_${
     }${resultsMap.installed.map(
       (install: Install) => `
   - [**✔ ${install.dependencyName}**](#✔-${snakeCase(install.dependencyName)})`
+    )}${
+      resultsMap.alreadyInstalled.length
+        ? `
+
+#### Already Installed`
+        : ''
+    }${resultsMap.alreadyInstalled.map(
+      (install: Install) => `
+  - [**✔ ${install.dependencyName}**](#✔-${snakeCase(install.dependencyName)})`
     )}
 
 
@@ -185,6 +195,14 @@ _${this.config.name} depends on the following software_${
       this.report.addInfo(`## Successfully Auto Installed
 `);
       resultsMap.installed.forEach((install: Install) => {
+        this.report.addInfo([install.report.md, '\n']);
+      });
+      this.report.addInfo('');
+    }
+    if (resultsMap.alreadyInstalled.length) {
+      this.report.addInfo(`## Already Installed
+`);
+      resultsMap.alreadyInstalled.forEach((install: Install) => {
         this.report.addInfo([install.report.md, '\n']);
       });
       this.report.addInfo('');
@@ -237,6 +255,7 @@ export enum ReportFormat {
 }
 
 export interface ResultsMap {
+  alreadyInstalled: Install[];
   failed: Install[];
   installed: Install[];
   notInstalled: Install[];
