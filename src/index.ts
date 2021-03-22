@@ -17,7 +17,8 @@ import {
   ConfigLoader,
   Dependencies,
   LoadedConfig,
-  LoadedDependency
+  LoadedDependency,
+  LoadedSystem
 } from '~/config';
 
 const logger = console;
@@ -56,18 +57,19 @@ export default class Workbelt {
 
   get dependencies(): LoadedDependency[] {
     if (this._dependencies) return this._dependencies;
-    const dependencies = Object.values(['all', ...system.systems]).reduce(
-      (dependencies: Dependencies, systemName: string) => {
-        return Object.entries(this.config.systems[systemName] || {}).reduce(
-          (
-            dependencies: Dependencies,
-            [dependencyName, dependency]: [string, LoadedDependency]
-          ) => {
-            dependencies[dependencyName] = dependency;
-            return dependencies;
-          },
-          dependencies
-        );
+    const systemNames = new Set(['all', ...system.systems]);
+    const dependencies = Object.entries(this.config.systems || {}).reduce(
+      (
+        dependencies: Dependencies,
+        [systemName, loadSystem]: [string, LoadedSystem]
+      ) => {
+        if (systemNames.has(systemName)) {
+          dependencies = {
+            ...dependencies,
+            ...loadSystem
+          };
+        }
+        return dependencies;
       },
       {}
     );
