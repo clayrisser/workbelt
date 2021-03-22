@@ -2,6 +2,7 @@ import execa, { ExecaError } from 'execa';
 import openUrl from 'open';
 import ora from 'ora';
 import which from 'which';
+import fs from 'fs-extra';
 import Report from '~/report';
 import { LoadedDependency, LoadedConfig } from '~/config';
 import { OpenMode, WorkbeltOptions } from '~/index';
@@ -91,16 +92,14 @@ ${resources.map((resource: string) => resource).join('\n\n')}`);
     if (!dependsOnNotInstalled.length && !sudo && autoinstall && install) {
       this.spinner.info(`auto installing ${this.dependencyName}`);
       let exitCode = 0;
-      const errChunks: string[] = [];
       try {
         const p = execa(install, {
           cwd: this.dependency._cwd,
           shell: true,
-          stdio: 'inherit'
+          stdio: 'pipe'
         });
-        p?.stderr?.on('data', (chunk: Buffer) =>
-          errChunks.push(chunk.toString())
-        );
+        p.stdout?.pipe(process.stdout);
+        p.stderr?.pipe(process.stderr);
         await p;
         this.report.infos[0] = `### ✔ ${this.dependencyName}`;
       } catch (err: any) {
@@ -117,9 +116,7 @@ _**please install ${this.dependencyName} manually**_
 #### Instructions
 `
         );
-        this.report.addErrors(
-          (err as ExecaError).stderr || errChunks.join('').trim() || err
-        );
+        this.report.addErrors((err as ExecaError).stderr || err);
         if (!exitCode) throw err;
         this.spinner.fail(message);
         this.report.addInfo(

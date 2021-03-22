@@ -147,45 +147,53 @@ _${this.config.name} depends on the following software_${
 
 #### Failed to Auto Install`
           : ''
-      }${resultsMap.failed.map(
-        (install: Install) => `
+      }${resultsMap.failed
+        .map(
+          (install: Install) => `
   - [**✘ ${install.dependencyName}**](#✘-${snakeCase(
-          install.dependencyName
-        ).replace(/_/g, '-')})`
-      )}${
+            install.dependencyName
+          ).replace(/_/g, '-')})`
+        )
+        .join('')}${
         resultsMap.notInstalled.length
           ? `
 
 #### Please Install Manually`
           : ''
-      }${resultsMap.notInstalled.map(
-        (install: Install) => `
+      }${resultsMap.notInstalled
+        .map(
+          (install: Install) => `
   - [**➜ ${install.dependencyName}**](#➜-${snakeCase(
-          install.dependencyName
-        ).replace(/_/g, '-')})`
-      )}${
+            install.dependencyName
+          ).replace(/_/g, '-')})`
+        )
+        .join('')}${
         resultsMap.installed.length
           ? `
 
 #### Successfully Auto Installed`
           : ''
-      }${resultsMap.installed.map(
-        (install: Install) => `
+      }${resultsMap.installed
+        .map(
+          (install: Install) => `
   - [**✔ ${install.dependencyName}**](#✔-${snakeCase(
-          install.dependencyName
-        ).replace(/_/g, '-')})`
-      )}${
+            install.dependencyName
+          ).replace(/_/g, '-')})`
+        )
+        .join('')}${
         resultsMap.alreadyInstalled.length
           ? `
 
 #### Already Installed`
           : ''
-      }${resultsMap.alreadyInstalled.map(
-        (install: Install) => `
+      }${resultsMap.alreadyInstalled
+        .map(
+          (install: Install) => `
   - [**✔ ${install.dependencyName}**](#✔-${snakeCase(
-          install.dependencyName
-        ).replace(/_/g, '-')})`
-      )}
+            install.dependencyName
+          ).replace(/_/g, '-')})`
+        )
+        .join('')}
 
 
 `);
