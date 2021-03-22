@@ -149,7 +149,9 @@ _${this.config.name} depends on the following software_${
           : ''
       }${resultsMap.failed.map(
         (install: Install) => `
-  - [**✘ ${install.dependencyName}**](#✘-${snakeCase(install.dependencyName)})`
+  - [**✘ ${install.dependencyName}**](#✘-${snakeCase(
+          install.dependencyName
+        ).replace(/_/g, '-')})`
       )}${
         resultsMap.notInstalled.length
           ? `
@@ -158,7 +160,9 @@ _${this.config.name} depends on the following software_${
           : ''
       }${resultsMap.notInstalled.map(
         (install: Install) => `
-  - [**➜ ${install.dependencyName}**](#➜-${snakeCase(install.dependencyName)})`
+  - [**➜ ${install.dependencyName}**](#➜-${snakeCase(
+          install.dependencyName
+        ).replace(/_/g, '-')})`
       )}${
         resultsMap.installed.length
           ? `
@@ -167,7 +171,9 @@ _${this.config.name} depends on the following software_${
           : ''
       }${resultsMap.installed.map(
         (install: Install) => `
-  - [**✔ ${install.dependencyName}**](#✔-${snakeCase(install.dependencyName)})`
+  - [**✔ ${install.dependencyName}**](#✔-${snakeCase(
+          install.dependencyName
+        ).replace(/_/g, '-')})`
       )}${
         resultsMap.alreadyInstalled.length
           ? `
@@ -176,7 +182,9 @@ _${this.config.name} depends on the following software_${
           : ''
       }${resultsMap.alreadyInstalled.map(
         (install: Install) => `
-  - [**✔ ${install.dependencyName}**](#✔-${snakeCase(install.dependencyName)})`
+  - [**✔ ${install.dependencyName}**](#✔-${snakeCase(
+          install.dependencyName
+        ).replace(/_/g, '-')})`
       )}
 
 
