@@ -1,5 +1,11 @@
 # workbelt
 
+---
+
+**DISCONTINUED**: This project is no longer maintained and has been replaced by [gitlab.com/bitspur/community/cody](https://gitlab.com/bitspur/community/cody).
+
+---
+
 [![GitHub stars](https://img.shields.io/github/stars/clayrisser/workbelt.svg?style=social&label=Stars)](https://github.com/clayrisser/workbelt)
 
 > keep your tools handy
